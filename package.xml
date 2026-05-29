@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!--
+  package.xml
+  ===========
+  ROS2 package manifest for warehouse_wall_follower.
+
+  PURPOSE:
+    Declares package metadata, build type, and all runtime/build
+    dependencies required for the autonomous warehouse inspection robot.
+
+  DEPENDENCIES EXPLAINED:
+    rclpy                  - Python ROS2 client library (all nodes use this)
+    geometry_msgs          - Twist (cmd_vel), PoseStamped, Vector3
+    sensor_msgs            - LaserScan (LiDAR), Imu, JointState
+    nav_msgs               - Odometry (robot pose)
+    std_msgs               - Float64, String, Bool (diagnostics/metrics)
+    tf2_ros                - TF tree publishing and lookup
+    tf2_geometry_msgs      - TF2 conversion helpers for geometry_msgs
+    robot_state_publisher  - Publishes TF from URDF joint states
+    joint_state_publisher  - Publishes /joint_states from URDF
+    xacro                  - URDF macro processor
+    ros_gz_sim             - Launch Gazebo Harmonic from ROS2
+    ros_gz_bridge          - Bridge GZ topics <-> ROS2 topics
+    rviz2                  - Visualization
+    launch                 - ROS2 launch system
+    launch_ros             - ROS2-specific launch actions
+-->
+<package format="3">
+  <name>warehouse_wall_follower</name>
+  <version>1.0.0</version>
+  <description>
+    Autonomous Warehouse Inspection Robot using Wall Following with PID Control.
+    Implements differential drive robot simulation in Gazebo Harmonic with
+    LiDAR-based wall detection, PID controller, and finite state machine.
+  </description>
+
+  <maintainer email="robot@warehouse.com">Warehouse Robot</maintainer>
+  <license>Apache-2.0</license>
+
+  <author email="robot@warehouse.com">Autonomous Systems Lab</author>
+
+  <!-- Build tool -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <!-- Core ROS2 Python runtime -->
+  <depend>rclpy</depend>
+
+  <!-- Message packages -->
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>visualization_msgs</depend>
+
+  <!-- TF2 -->
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
+  <!-- Robot description -->
+  <depend>robot_state_publisher</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>xacro</depend>
+  <depend>urdf</depend>
+
+  <!-- Gazebo Harmonic integration -->
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+
+  <!-- Visualization -->
+  <depend>rviz2</depend>
+
+  <!-- Launch -->
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+
+  <!-- Test dependencies -->
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,101 @@
+# ros_gz_bridge.yaml
+# ===================
+# Topic bridge configuration for ros_gz_bridge (Gazebo Harmonic ↔ ROS2 Jazzy).
+#
+# PURPOSE:
+#   ros_gz_bridge translates messages between Gazebo's internal transport
+#   (gz-transport) and ROS2's DDS/FastDDS middleware. This file defines
+#   every topic that needs to cross that boundary.
+#
+# DIRECTION NOTATION:
+#   GZ_TO_ROS  : Gazebo publishes → ROS2 subscribes
+#   ROS_TO_GZ  : ROS2 publishes  → Gazebo subscribes
+#   BIDIRECTIONAL: Both directions active
+#
+# MESSAGE TYPE FORMAT:
+#   gz_type_name  : Gazebo Harmonic message type (gz.msgs.*)
+#   ros_type_name : ROS2 message type (package/msg/Type)
+#
+# REFERENCE:
+#   Full type mapping list:
+#   https://github.com/gazebosim/ros_gz/blob/ros2/ros_gz_bridge/README.md
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# BRIDGE ENTRIES
+# Each entry has:
+#   ros_topic_name : Topic name on the ROS2 side
+#   gz_topic_name  : Topic name on the Gazebo side (may differ)
+#   ros_type_name  : Full ROS2 message type string
+#   gz_type_name   : Gazebo message type string
+#   direction      : GZ_TO_ROS | ROS_TO_GZ | BIDIRECTIONAL
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── 1. SIMULATION CLOCK ──────────────────────────────────────────────────────
+# Gazebo publishes simulation time on /clock.
+# ROS2 nodes use this when use_sim_time=true.
+# Direction: GZ_TO_ROS (Gazebo drives the clock)
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: gz.msgs.Clock
+  direction: GZ_TO_ROS
+
+# ── 2. CMD_VEL (VELOCITY COMMAND) ────────────────────────────────────────────
+# ROS2 nodes (PID controller, state machine) publish Twist to /cmd_vel.
+# The DiffDrive plugin inside Gazebo subscribes to this topic.
+# Direction: ROS_TO_GZ (ROS2 controls the robot)
+- ros_topic_name: /cmd_vel
+  gz_topic_name: /cmd_vel
+  ros_type_name: geometry_msgs/msg/Twist
+  gz_type_name: gz.msgs.Twist
+  direction: ROS_TO_GZ
+
+# ── 3. ODOMETRY ──────────────────────────────────────────────────────────────
+# The DiffDrive plugin publishes odometry in Gazebo.
+# ROS2 (metrics node, navigation) subscribes to /odom.
+# Direction: GZ_TO_ROS
+- ros_topic_name: /odom
+  gz_topic_name: /odom
+  ros_type_name: nav_msgs/msg/Odometry
+  gz_type_name: gz.msgs.Odometry
+  direction: GZ_TO_ROS
+
+# ── 4. LASER SCAN (LiDAR) ────────────────────────────────────────────────────
+# The GPU LiDAR sensor in Gazebo publishes scan data.
+# ROS2 (wall_detector, state_machine) subscribes to /scan.
+# Direction: GZ_TO_ROS
+- ros_topic_name: /scan
+  gz_topic_name: /scan
+  ros_type_name: sensor_msgs/msg/LaserScan
+  gz_type_name: gz.msgs.LaserScan
+  direction: GZ_TO_ROS
+
+# ── 5. IMU ────────────────────────────────────────────────────────────────────
+# The IMU sensor in Gazebo publishes to /imu.
+# ROS2 (navigation, monitoring) subscribes to /imu/data.
+# Direction: GZ_TO_ROS
+- ros_topic_name: /imu/data
+  gz_topic_name: /imu
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: gz.msgs.IMU
+  direction: GZ_TO_ROS
+
+# ── 6. JOINT STATES ──────────────────────────────────────────────────────────
+# The JointStatePub plugin publishes joint positions/velocities.
+# robot_state_publisher subscribes to /joint_states to compute TF.
+# Direction: GZ_TO_ROS
+- ros_topic_name: /joint_states
+  gz_topic_name: /joint_states
+  ros_type_name: sensor_msgs/msg/JointState
+  gz_type_name: gz.msgs.Model
+  direction: GZ_TO_ROS
+
+# ── 7. TF (TRANSFORM TREE) ───────────────────────────────────────────────────
+# The DiffDrive plugin publishes the odom->base_footprint transform.
+# This needs to be bridged so ROS2 TF tree is complete.
+# Direction: GZ_TO_ROS
+- ros_topic_name: /tf
+  gz_topic_name: /tf
+  ros_type_name: tf2_msgs/msg/TFMessage
+  gz_type_name: gz.msgs.Pose_V
+  direction: GZ_TO_ROS

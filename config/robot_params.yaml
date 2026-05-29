@@ -1,0 +1,144 @@
+# robot_params.yaml
+# ==================
+# ROS2 parameter configuration for all warehouse_wall_follower nodes.
+#
+# This file is loaded by the launch system using the `parameters` argument
+# of each Node() action. Parameters here override the defaults declared
+# in each node's __init__ method.
+#
+# To tune the wall-following behaviour:
+#   1. Adjust PID gains (kp, ki, kd) for your specific environment.
+#   2. Adjust target_distance to change the desired wall offset.
+#   3. Adjust velocity limits for the robot's speed requirements.
+#
+# PID TUNING GUIDE:
+#   Start with ki=0, kd=0 and increase kp until the robot oscillates,
+#   then halve kp. Add kd to damp oscillations. Add ki to eliminate
+#   steady-state error.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WALL DETECTOR NODE PARAMETERS
+# ─────────────────────────────────────────────────────────────────────────────
+wall_detector:
+  ros__parameters:
+    # Sector centre angle (degrees from robot forward direction)
+    # -90.0 = pointing directly to the robot's right side
+    sector_centre_deg: -90.0
+
+    # Half-width of the detection sector (degrees)
+    # Total sector = 2 × sector_half_deg = 60° centred on -90°
+    # Range: [-120°, -60°] covers side + angled-back views
+    sector_half_deg: 45.0
+
+    # Maximum range considered to be a wall (metres)
+    # Readings beyond this are treated as a gap/open space
+    outlier_threshold: 4.5
+
+    # Minimum number of valid LiDAR samples required to declare wall detected
+    # With 60° sector and 1°/sample LiDAR → 60 theoretical samples
+    # min_valid_readings = 5 means we need at least 5/60 to be valid
+    min_valid_readings: 3
+
+    # Maximum wall distance for state machine threshold comparisons
+    max_wall_distance: 2.5
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PID CONTROLLER NODE PARAMETERS
+# ─────────────────────────────────────────────────────────────────────────────
+pid_controller:
+  ros__parameters:
+    # Target wall distance in metres
+    # Robot will maintain this distance from the right wall
+    target_distance: 0.70
+
+    # Proportional gain
+    # Effect: larger → faster response, smaller → slower/sluggish
+    # Too large: oscillation around target
+    kp: 1.20
+
+    # Integral gain
+    # Effect: eliminates steady-state offset over time
+    # Too large: slow oscillation, windup
+    ki: 0.05
+
+    # Derivative gain
+    # Effect: damps oscillations, improves stability
+    # Too large: amplifies noise, jittery motion
+    kd: 0.80
+
+    # Maximum forward speed (metres/second)
+    # Reduced automatically during large angular corrections
+    max_linear_vel: 0.25
+
+    # Maximum angular speed (radians/second)
+    # PID output saturated to ±this value
+    max_angular_vel: 1.20
+
+    # Anti-windup clamp for integral accumulator (rad/s equivalent)
+    # Prevents integral from growing unbounded when wall is lost
+    integral_max: 1.50
+
+    # PID control loop frequency (Hz)
+    # Must be ≥ LiDAR update rate (10 Hz) for good tracking
+    control_frequency: 20.0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STATE MACHINE NODE PARAMETERS
+# ─────────────────────────────────────────────────────────────────────────────
+state_machine:
+  ros__parameters:
+    # Maximum distance at which robot considers itself to have "found" a wall
+    # Used in SEARCH_WALL → FOLLOW_WALL transition
+    wall_found_threshold: 3.50
+
+    # Distance above which wall is considered "far" (may need to approach)
+    # Used in FOLLOW_WALL → TURN_CORNER transition condition
+    far_threshold: 3.00
+
+    # Distance below which wall is "too close" (must move away)
+    # The PID handles this automatically; this is for FSM monitoring
+    close_threshold: 0.25
+
+    # Minimum front clearance before triggering corner turn (metres)
+    # If obstacle is closer than this AND wall is far → TURN_CORNER
+    front_obstacle_dist: 0.50
+
+    # How long wall must be absent before FOLLOW_WALL → LOST_WALL (seconds)
+    # Shorter = more aggressive detection; longer = ignore brief gaps
+    lost_timeout: 3.00
+
+    # How long LOST_WALL continues recovery before returning to SEARCH (seconds)
+    recovery_timeout: 8.00
+
+    # Angular velocity during SEARCH_WALL state (rad/s)
+    # Robot spins at this rate to scan for a wall
+    search_angular_vel: 0.35
+
+    # Angular velocity during TURN_CORNER state (rad/s)
+    # Larger = tighter turn radius
+    turn_angular_vel: 0.60
+
+    # Duration of TURN_CORNER state (seconds)
+    # With turn_angular_vel=0.60 rad/s, 2.5s ≈ 86° turn
+    turn_duration: 2.50
+
+    # FSM update frequency (Hz)
+    control_frequency: 20.0
+
+    # Half-width of front obstacle detection sector (degrees)
+    # Total front sector = 2 × front_sector_deg
+    front_sector_deg: 30.0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# METRICS NODE PARAMETERS
+# ─────────────────────────────────────────────────────────────────────────────
+metrics_node:
+  ros__parameters:
+    # Target wall distance (must match pid_controller/target_distance)
+    target_distance: 0.70
+
+    # Maximum error (metres) for a sample to be classified as "accurate"
+    accuracy_threshold: 0.15
+
+    # Metrics publication rate (Hz)
+    publish_rate: 1.0
